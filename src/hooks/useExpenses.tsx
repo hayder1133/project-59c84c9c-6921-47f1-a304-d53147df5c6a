@@ -12,6 +12,7 @@ export interface Expense {
   notes: string | null;
   date: string;
   created_at: string;
+  is_paid: boolean;
 }
 
 export interface ExpenseInput {
@@ -20,6 +21,7 @@ export interface ExpenseInput {
   payee: string;
   notes?: string;
   date: string;
+  is_paid?: boolean;
 }
 
 export const useExpenses = () => {
@@ -54,11 +56,15 @@ export const useExpenses = () => {
     if (!user) return;
 
     try {
+      // For debt category, set is_paid to false by default
+      const is_paid = expense.category === 'debt' ? false : true;
+      
       const { data, error } = await supabase
         .from('expenses')
         .insert({
           ...expense,
           user_id: user.id,
+          is_paid,
         })
         .select()
         .single();
@@ -66,7 +72,7 @@ export const useExpenses = () => {
       if (error) throw error;
       
       setExpenses(prev => [data, ...prev]);
-      toast.success('تمت إضافة المصروف بنجاح');
+      toast.success(expense.category === 'debt' ? 'تمت إضافة الدين بنجاح' : 'تمت إضافة المصروف بنجاح');
       return data;
     } catch (error) {
       console.error('Error adding expense:', error);
@@ -124,14 +130,60 @@ export const useExpenses = () => {
     
     return expenses
       .filter(e => new Date(e.date) >= startOfMonth)
+      // Exclude unpaid debts from monthly total
+      .filter(e => !(e.category === 'debt' && !e.is_paid))
       .reduce((sum, e) => sum + Number(e.amount), 0);
+  };
+
+  const settleDebt = async (debt: Expense) => {
+    if (!user || debt.category !== 'debt') return;
+
+    try {
+      // Mark the debt as paid
+      const { error } = await supabase
+        .from('expenses')
+        .update({ is_paid: true, date: new Date().toISOString().split('T')[0] })
+        .eq('id', debt.id);
+
+      if (error) throw error;
+      
+      // Update local state
+      setExpenses(prev => prev.map(e => 
+        e.id === debt.id 
+          ? { ...e, is_paid: true, date: new Date().toISOString().split('T')[0] } 
+          : e
+      ));
+      
+      toast.success(`تم تسديد دين ${debt.payee} بنجاح`);
+    } catch (error) {
+      console.error('Error settling debt:', error);
+      toast.error('حدث خطأ في تسديد الدين');
+      throw error;
+    }
+  };
+
+  const getDebts = () => {
+    return expenses.filter(e => e.category === 'debt');
+  };
+
+  const getUnpaidDebtsTotal = () => {
+    return expenses
+      .filter(e => e.category === 'debt' && !e.is_paid)
+      .reduce((sum, e) => sum + Number(e.amount), 0);
+  };
+
+  const getUnpaidDebtsCount = () => {
+    return expenses.filter(e => e.category === 'debt' && !e.is_paid).length;
   };
 
   const getCategoryTotals = () => {
     const totals: Record<string, number> = {};
-    expenses.forEach(e => {
-      totals[e.category] = (totals[e.category] || 0) + Number(e.amount);
-    });
+    // Only count paid expenses (exclude unpaid debts)
+    expenses
+      .filter(e => !(e.category === 'debt' && !e.is_paid))
+      .forEach(e => {
+        totals[e.category] = (totals[e.category] || 0) + Number(e.amount);
+      });
     return totals;
   };
 
@@ -151,9 +203,13 @@ export const useExpenses = () => {
     addExpense,
     updateExpense,
     deleteExpense,
+    settleDebt,
     getMonthlyTotal,
     getCategoryTotals,
     getPayeeTotals,
+    getDebts,
+    getUnpaidDebtsTotal,
+    getUnpaidDebtsCount,
     refetch: fetchExpenses,
   };
 };

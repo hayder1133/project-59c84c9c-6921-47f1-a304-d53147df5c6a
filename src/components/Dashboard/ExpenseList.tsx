@@ -8,13 +8,19 @@ interface ExpenseListProps {
   onEdit: (expense: Expense) => void;
   onDelete: (id: string) => void;
   searchQuery: string;
+  categoryFilter: string | null;
 }
 
-const ExpenseList = ({ expenses, onEdit, onDelete, searchQuery }: ExpenseListProps) => {
-  const filteredExpenses = expenses.filter(expense =>
-    expense.payee.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    expense.notes?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+const ExpenseList = ({ expenses, onEdit, onDelete, searchQuery, categoryFilter }: ExpenseListProps) => {
+  // Filter out debts - they have their own tab
+  const nonDebtExpenses = expenses.filter(e => e.category !== 'debt');
+  
+  const filteredExpenses = nonDebtExpenses.filter(expense => {
+    const matchesSearch = expense.payee.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      expense.notes?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = categoryFilter === null || expense.category === categoryFilter;
+    return matchesSearch && matchesCategory;
+  });
 
   if (filteredExpenses.length === 0) {
     return (

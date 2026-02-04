@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0ea5e9"/>
+      <stop offset="100%" style="stop-color:#0284c7"/>
+    </linearGradient>
+    <linearGradient id="houseGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff"/>
+      <stop offset="100%" style="stop-color:#f0f9ff"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background Circle -->
+  <circle cx="256" cy="256" r="240" fill="url(#bgGrad)"/>
+  
+  <!-- House Shape -->
+  <path d="M256 100 L400 200 L400 380 L320 380 L320 280 L192 280 L192 380 L112 380 L112 200 Z" 
+        fill="url(#houseGrad)" 
+        stroke="#ffffff" 
+        stroke-width="4"/>
+  
+  <!-- Roof accent -->
+  <path d="M256 100 L400 200 L112 200 Z" 
+        fill="#ffffff" 
+        opacity="0.9"/>
+  
+  <!-- Coin/Money symbol in center -->
+  <circle cx="256" cy="230" r="50" fill="#0ea5e9" stroke="#ffffff" stroke-width="4"/>
+  <text x="256" y="248" 
+        text-anchor="middle" 
+        font-family="Arial, sans-serif" 
+        font-size="48" 
+        font-weight="bold" 
+        fill="#ffffff">د</text>
+  
+  <!-- Door -->
+  <rect x="224" y="300" width="64" height="80" rx="4" fill="#0ea5e9"/>
+  <circle cx="276" cy="345" r="6" fill="#ffffff"/>
+</svg>
