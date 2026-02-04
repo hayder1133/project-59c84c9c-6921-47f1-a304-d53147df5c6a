@@ -54,7 +54,8 @@ const Auth = () => {
           }
           return;
         }
-        toast.success('تم إنشاء الحساب! يرجى تأكيد البريد الإلكتروني');
+        toast.success('تم إنشاء الحساب بنجاح!');
+        navigate('/');
       }
     } finally {
       setLoading(false);
