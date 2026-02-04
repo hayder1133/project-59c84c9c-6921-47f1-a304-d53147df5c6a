@@ -4,14 +4,17 @@ import Header from '@/components/Dashboard/Header';
 import MonthlyStats from '@/components/Dashboard/MonthlyStats';
 import SearchBar from '@/components/Dashboard/SearchBar';
 import TabNavigation from '@/components/Dashboard/TabNavigation';
+import CategoryFilter from '@/components/Dashboard/CategoryFilter';
 import ExpenseList from '@/components/Dashboard/ExpenseList';
+import DebtList from '@/components/Dashboard/DebtList';
+import DebtStats from '@/components/Dashboard/DebtStats';
 import Reports from '@/components/Dashboard/Reports';
 import FloatingButton from '@/components/Dashboard/FloatingButton';
 import ExpenseForm from '@/components/Dashboard/ExpenseForm';
 import DeleteConfirmDialog from '@/components/Dashboard/DeleteConfirmDialog';
 import { Loader2 } from 'lucide-react';
 
-type Tab = 'history' | 'reports';
+type Tab = 'history' | 'debts' | 'reports';
 
 const Dashboard = () => {
   const {
@@ -20,13 +23,18 @@ const Dashboard = () => {
     addExpense,
     updateExpense,
     deleteExpense,
+    settleDebt,
     getMonthlyTotal,
     getCategoryTotals,
     getPayeeTotals,
+    getDebts,
+    getUnpaidDebtsTotal,
+    getUnpaidDebtsCount,
   } = useExpenses();
 
   const [activeTab, setActiveTab] = useState<Tab>('history');
   const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -57,6 +65,10 @@ const Dashboard = () => {
     }
   };
 
+  const handleSettleDebt = async (debt: Expense) => {
+    await settleDebt(debt);
+  };
+
   const handleCloseForm = () => {
     setShowForm(false);
     setEditingExpense(null);
@@ -75,20 +87,50 @@ const Dashboard = () => {
       <Header />
       
       <main className="container py-4 space-y-4">
-        <MonthlyStats total={getMonthlyTotal()} />
+        {activeTab === 'debts' ? (
+          <DebtStats 
+            totalUnpaid={getUnpaidDebtsTotal()} 
+            unpaidCount={getUnpaidDebtsCount()} 
+          />
+        ) : (
+          <MonthlyStats total={getMonthlyTotal()} />
+        )}
         
-        <SearchBar value={searchQuery} onChange={setSearchQuery} />
+        {activeTab === 'history' && (
+          <>
+            <SearchBar value={searchQuery} onChange={setSearchQuery} />
+            <CategoryFilter 
+              selectedCategory={categoryFilter} 
+              onCategoryChange={setCategoryFilter} 
+            />
+          </>
+        )}
         
-        <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+        <TabNavigation 
+          activeTab={activeTab} 
+          onTabChange={setActiveTab} 
+          unpaidDebtsCount={getUnpaidDebtsCount()}
+        />
 
-        {activeTab === 'history' ? (
+        {activeTab === 'history' && (
           <ExpenseList
             expenses={expenses}
             onEdit={handleEdit}
             onDelete={handleDeleteClick}
             searchQuery={searchQuery}
+            categoryFilter={categoryFilter}
           />
-        ) : (
+        )}
+
+        {activeTab === 'debts' && (
+          <DebtList
+            debts={getDebts()}
+            onSettle={handleSettleDebt}
+            onDelete={handleDeleteClick}
+          />
+        )}
+
+        {activeTab === 'reports' && (
           <Reports
             categoryTotals={getCategoryTotals()}
             payeeTotals={getPayeeTotals()}
